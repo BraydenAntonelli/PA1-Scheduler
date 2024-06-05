@@ -152,9 +152,10 @@ def round_robin_scheduling(processes, quantum, run_for):
     processes.sort(key=lambda x: x.arrival_time)
 
     while current_time < run_for:
+        # Check for new arrivals and add them to the queue
         while next_process_idx < n and processes[next_process_idx].arrival_time <= current_time:
             if processes[next_process_idx].pid not in arrivals_logged:
-                events.append((current_time, f"{processes[next_process_idx].name} arrived"))
+                events.append((processes[next_process_idx].arrival_time, f"{processes[next_process_idx].name} arrived"))
                 arrivals_logged.add(processes[next_process_idx].pid)
             queue.append(processes[next_process_idx])
             next_process_idx += 1
@@ -164,22 +165,23 @@ def round_robin_scheduling(processes, quantum, run_for):
             current_time += 1
             continue
 
+        # Select the next process from the queue
         process = queue.popleft()
 
         if process.start_time == -1:
             process.start_time = current_time
-        if process.response_time == -1:
             process.response_time = current_time - process.arrival_time
 
-        events.append((current_time, f"{process.name} selected (burst {process.remaining_time})"))
-
+        # Execute the process for the quantum time
         exec_time = min(quantum, process.remaining_time)
-        process.remaining_time -= exec_time
+        events.append((current_time, f"{process.name} selected (burst {process.remaining_time})"))
         current_time += exec_time
+        process.remaining_time -= exec_time
 
+        # Check for new arrivals during the execution
         while next_process_idx < n and processes[next_process_idx].arrival_time <= current_time:
             if processes[next_process_idx].pid not in arrivals_logged:
-                events.append((current_time, f"{processes[next_process_idx].name} arrived"))
+                events.append((processes[next_process_idx].arrival_time, f"{processes[next_process_idx].name} arrived"))
                 arrivals_logged.add(processes[next_process_idx].pid)
             queue.append(processes[next_process_idx])
             next_process_idx += 1
@@ -201,6 +203,7 @@ def round_robin_scheduling(processes, quantum, run_for):
 
     events.append((run_for, "Finished at time"))
     return processes, events
+
 
 def calculate_metrics(processes):
     for p in processes:
