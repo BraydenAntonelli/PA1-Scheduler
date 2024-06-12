@@ -105,15 +105,13 @@ def srtf_scheduling(processes, run_for):
     ready_queue = []
     last_selected_process = None
 
-    while completed != n:
-        # Check for new arrivals and add them to the ready queue
-        new_arrivals = []
-        for process in processes:
-            if process.arrival_time == current_time and process.pid not in arrivals_logged:
-                arrivals_logged.add(process.pid)
-                new_arrivals.append(process)
-                ready_queue.append(process)
-                events.append((current_time, f"{process.name} arrived"))
+    while completed != n or current_time < run_for:
+        # Check for new arrivals at the current time
+        new_arrivals = [p for p in processes if p.arrival_time == current_time and p.pid not in arrivals_logged]
+        for process in new_arrivals:
+            arrivals_logged.add(process.pid)
+            ready_queue.append(process)
+            events.append((current_time, f"{process.name} arrived"))
 
         # Sort the ready queue by remaining time, then by arrival time
         ready_queue.sort(key=lambda x: (x.remaining_time, x.arrival_time))
@@ -127,17 +125,10 @@ def srtf_scheduling(processes, run_for):
             if process != last_selected_process or process.remaining_time == process.burst_time:
                 events.append((current_time, f"{process.name} selected (burst {process.remaining_time})"))
 
-            exec_time = 1
-            current_time += exec_time
-            process.remaining_time -= exec_time
+            # Process runs for 1 time unit
+            process.remaining_time -= 1
+            current_time += 1
             last_selected_process = process
-
-            # Check for new arrivals during execution
-            for p in processes:
-                if current_time == p.arrival_time and p.pid not in arrivals_logged:
-                    arrivals_logged.add(p.pid)
-                    ready_queue.append(p)
-                    events.append((current_time, f"{p.name} arrived"))
 
             if process.remaining_time == 0:
                 process.completion_time = current_time
@@ -148,12 +139,14 @@ def srtf_scheduling(processes, run_for):
             else:
                 ready_queue.append(process)
         else:
+            # No process in the ready queue, system is idle
             events.append((current_time, "Idle"))
             current_time += 1
             last_selected_process = None
 
     events.append((run_for, "Finished at time"))
     return processes, events
+
 
 
 def round_robin_scheduling(processes, quantum, run_for):
