@@ -6,7 +6,7 @@
 import sys
 import os
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk
 from collections import deque
 
 class Process:
@@ -230,10 +230,10 @@ def calculate_metrics(processes):
     return processes
 
 def display_results(processes, events):
-    result_window = tk.Toplevel()
-    result_window.title("Scheduling Results")
+    root = tk.Tk()
+    root.title("Scheduling Results")
 
-    main_frame = ttk.Frame(result_window, padding="10")
+    main_frame = ttk.Frame(root, padding="10")
     main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
     time_frame = ttk.Frame(main_frame, padding="5")
@@ -242,27 +242,30 @@ def display_results(processes, events):
     summary_frame = ttk.Frame(main_frame, padding="5")
     summary_frame.grid(row=0, column=1, sticky=(tk.W, tk.E))
 
+    # Events
     ttk.Label(time_frame, text="Events", font=("Helvetica", 16)).grid(row=0, column=0, sticky=tk.W)
     for idx, (time, event) in enumerate(events):
         ttk.Label(time_frame, text=f"Time {time:4} : {event}").grid(row=idx+1, column=0, sticky=tk.W)
 
+    # Metrics
     ttk.Label(summary_frame, text="Metrics", font=("Helvetica", 16)).grid(row=0, column=0, sticky=tk.W)
     for idx, process in enumerate(processes):
         ttk.Label(summary_frame, text=f"{process.name} wait {process.waiting_time:4} turnaround {process.turnaround_time:4} response {process.response_time:4}").grid(row=idx+1, column=0, sticky=tk.W)
 
-    ttk.Button(result_window, text="Close and Select Another File", command=result_window.destroy).grid(row=1, column=0, columnspan=2)
-
-def select_and_process_file():
-    file_path = filedialog.askopenfilename(filetypes=[("Input files", "*.in")])
-    if not file_path:
-        print("No file selected.")
+    root.mainloop()
+    
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: scheduler-get.py <input file>")
         return
 
+    input_file = sys.argv[1]
+    
     try:
-        with open(file_path, 'r') as file:
+        with open(input_file, 'r') as file:
             file_content = file.read()
     except FileNotFoundError:
-        print(f"Error: File {file_path} not found.")
+        print(f"Error: File {input_file} not found.")
         return
     
     try:
@@ -282,17 +285,8 @@ def select_and_process_file():
         return
 
     scheduled_processes = calculate_metrics(scheduled_processes)
+
     display_results(scheduled_processes, events)
-    
-def main():
-    root = tk.Tk()
-    root.title("Scheduler App")
-    root.geometry("300x100")
-
-    open_button = ttk.Button(root, text="Select Input File", command=lambda: [root.deiconify(), select_and_process_file()])
-    open_button.pack(pady=20)
-
-    root.mainloop()
 
 if __name__ == "__main__":
     main()
