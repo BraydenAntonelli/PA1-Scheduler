@@ -229,7 +229,7 @@ def calculate_metrics(processes):
             p.response_time = p.start_time - p.arrival_time
     return processes
 
-def display_results(processes, events):
+def display_results(process_count, algorithm, quantum, processes, events):
     root = tk.Tk()
     root.title("Scheduling Results")
 
@@ -242,10 +242,19 @@ def display_results(processes, events):
     summary_frame = ttk.Frame(main_frame, padding="5")
     summary_frame.grid(row=0, column=1, sticky=(tk.W, tk.E))
 
-    # Events
+  # Events
     ttk.Label(time_frame, text="Events", font=("Helvetica", 16)).grid(row=0, column=0, sticky=tk.W)
+    ttk.Label(time_frame, text=f"{process_count} processes").grid(row=1, column=0, sticky=tk.W)
+    if algorithm == 'rr':
+        ttk.Label(time_frame, text=f"Using Round-Robin\nQuantum {quantum}").grid(row=2, column=0, sticky=tk.W)
+        start_idx = 3
+    else:
+        ttk.Label(time_frame, text=f"Using {algorithm.upper()}").grid(row=2, column=0, sticky=tk.W)
+        start_idx = 3
+
     for idx, (time, event) in enumerate(events):
-        ttk.Label(time_frame, text=f"Time {time:4} : {event}").grid(row=idx+1, column=0, sticky=tk.W)
+        ttk.Label(time_frame, text=f"Time {time:4} : {event}").grid(row=start_idx+idx, column=0, sticky=tk.W)
+
 
     # Metrics
     ttk.Label(summary_frame, text="Metrics", font=("Helvetica", 16)).grid(row=0, column=0, sticky=tk.W)
@@ -286,7 +295,7 @@ def main():
 
     scheduled_processes = calculate_metrics(scheduled_processes)
 
-    display_results(scheduled_processes, events)
+    display_results(process_count, algorithm, quantum, processes, events)
 
 if __name__ == "__main__":
     main()
